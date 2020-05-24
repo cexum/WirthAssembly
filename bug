@@ -1,0 +1,81 @@
+#!/bin/wpemu -r -f
+                *
+                * bst.s	make a bst tree
+                *
+000000 410000b8	strt	MOV	$bst,R1
+000004 420000b8		MOV	$root,R2	
+000008 430020b8		MOV	$ptr,R3
+00000c 84300000		MOV	0(R3),R4
+000010 85400000		MOV	0(R4),R5
+000014 480020bc		MOV	$data,R8
+000018 f7000005		JMPL	insnode
+00001c 410020b8		MOV	$ptr,R1
+000020 41180004	break	ADD	R1,$4,R1
+000024 82100000		MOV	0(R1),R2
+000028 f7000001		JMPL	insnode
+00002c e7000020		JMP	exit
+
+000030 4ee9000c	insnode	SUB	R14,$12,R14	*allocate stack space
+000034 afe00000		MOV	R15,0(R14)	*push link
+000038 99800000		MOVB	0(R8),R9
+00003c b9f00004		MOVB	R9,4(R15)	*push data
+000040 48880001		ADD	R8,$1,R8	*increment data addr to next byte
+000044 410020b8		MOV	$ptr,R1		*load address of pointer
+000048 82100000		MOV	0(R1),R2	*load val of pointer (its an address)
+00004c 93200000		MOVB	0(R2),R3	*get value of the node
+000050 43390000		SUB	R3,$0,R3	*see if node is 0 (null)
+000054 e100000f		JEQ	newnode
+000058 0c390009		SUB	R3,R9,R12	*R12 wasn't being used..
+00005c e1000002		JEQ	fndlft		*new node is equal (discard in ws)
+000060 e9000001		JNE	fndlft		*new val is < node, find left leaf
+000064 e700000a		JMP	fndrgt
+
+000068 47780001	fndlft	ADD	R7,$1,R7	*debugging information
+00006c 410020b8		MOV	$ptr,R1		*get ptr address
+000070 42180004		ADD	R1,$4,R2	*increment addr to point to left leaf
+000074 83200000		MOV	0(R2),R3	*get address of left leaf
+000078 84300000		MOV	0(R3),R4	*get value at addess of left leaf
+00007c 44490000		SUB	R4,$0,R4	*see if value is 0 (null node)
+000080 e1000001		JEQ	debug		*test
+000084 e700000a		JMP	exit
+
+000088 47780001	debug	ADD	R7,$1,R7	*debuggin information
+00008c e7000008		JMP	exit
+
+000090 e7000007	fndrgt	JMP	exit
+
+000094 410020b8	newnode MOV	$ptr,R1		*assumes ptr has been set by caller
+000098 82100000		MOV	0(R1),R2
+00009c 93f00004		MOVB	4(R15),R3
+0000a0 b3200000		MOVB	R3,0(R2)	*populate node
+0000a4 8fe00000		MOV	0(R14),R15
+0000a8 4ee8000c		ADD	R14,$12,R14	*shift stack frame
+0000ac c700000f		JMP	(R15)
+
+0000b0 40000004	exit	MOV	$4,R0
+0000b4 c7000010		SYSCALL
+
+               	bst	BSS	8192		*populate me
+       000000b8	root	EQU	bst
+0020b8 000000b8	ptr	WORD	root
+       00000004	leftlf	EQU	4
+       00000008	rghtlf	EQU	8 
+0020bc 61626364	data	STRINGZ	'dcbaefghijk'
+0020c0 68676665	
+0020c4 006b6a69	
+
+                Symbol Table
+S 0x000000 strt
+S 0x000020 break
+S 0x000030 insnode
+S 0x000068 fndlft
+S 0x000088 debug
+S 0x000090 fndrgt
+S 0x000094 newnode
+S 0x0000b0 exit
+S 0x0000b8 bst
+S 0x0000b8 root
+S 0x0020b8 ptr
+S 0x000004 leftlf
+S 0x000008 rghtlf
+S 0x0020bc data

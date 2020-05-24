@@ -1,0 +1,45 @@
+000000 40000000	start	MOV	$0,R0
+000004 41000060		MOV	$int,R1
+000008 f7000000		JMPL	iter		* update pc
+
+00000c 40080001	iter	ADD	R0,$1,R0	* iteration count
+000010 82100000		MOV	0(R1),R2	* load int
+000014 432b0002		DIV	R2,$2,R3	* determine if even
+000018 24000000		MOV	H,R4		* move remainder into R4
+00001c 44490000		SUB	R4,$0,R4	* determine if H = 1
+000020 e9000001		JNE	odd		* if H = 1, int is odd
+000024 e7000007		JMP	even		* else int is even
+
+000028 05000002	odd	MOV	R2,R5		*check if R2 = 1; exit condition
+00002c 45590001		SUB	R5,$1,R5	
+000030 e1000007		JEQ	end
+000034 422a0003		MUL	R2,$3,R2
+000038 42280001		ADD	R2,$1,R2
+00003c a2100000		MOV	R2,0(R1)
+000040 c700000f		JMP	(R15)
+
+000044 422b0002	even	DIV	R2,$2,R2
+000048 a2100000		MOV	R2,0(R1)
+00004c c700000f		JMP	(R15)
+
+000050 47000064	end	MOV	$res,R7
+000054 a0700000		MOV	R0,0(R7)
+000058 40000004		MOV	$4,R0	
+00005c c7000010		SYSCALL
+
+000060 7fed0000	int	WORD	0x7fed0000	*initial value
+000064 00000000	res	WORD	0
+
+
+
+
+
+
+                Symbol Table
+S 0x000000 start
+S 0x00000c iter
+S 0x000028 odd
+S 0x000044 even
+S 0x000050 end
+S 0x000060 int
+S 0x000064 res
