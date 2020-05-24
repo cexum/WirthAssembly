@@ -1,0 +1,46 @@
+                *
+                * hello.s: Charles' first assembly program
+                *
+000000 e7ffffff	start	JMP	str
+000004 e7000006		JMP	mult 
+000008 e7000008		JMP	STOP
+
+
+00000c 00000002	COA	WORD	2
+000010 00000005	COB	WORD	5
+000014 00000000	PRO	WORD	0
+000018 00000000	SUM	WORD	0
+00001c 00000000	RES	WORD	0
+
+
+                *multiply numbers*
+000020 020a0001	mult	MUL 	R0,R1,R2
+000024 03000002		MOV 	R2,R3
+000028 04380004		ADD 	R3,R4,R4
+
+                *stop program*
+00002c 40000004	STOP	MOV $4,R0
+
+                *test*
+000030 40000002		MOV $2,R0
+000034 41000005		MOV $5,R1
+                *move sh!t to registers*
+000038 80e0000c		MOV	COA(R14),R0
+00003c 81f00010		MOV	COB(R15),R1
+000040 83d00014		MOV	PRO(R13),R3
+000044 84c00018		MOV	SUM(R12),R4
+000048 85b0001c		MOV	RES(R11),R5
+
+                Symbol Table
+S 0x000000 start
+S 0x00000c COA
+S 0x000010 COB
+S 0x000014 PRO
+S 0x000018 SUM
+S 0x00001c RES
+S 0x000020 end
+S 0x234566 bignum
+S 0x000020 mult
+S 0x00002c STOP
+S 0x000000 str
+S 0x000000 init

@@ -1,0 +1,1 @@
+#!/bin/wpemu -r -f

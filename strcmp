@@ -1,0 +1,34 @@
+                *
+                * strcmp.s	compare two STRINGZ (using '0' as terminus)
+                *
+
+000000 46000000	strt	MOV 	$0,R6		*result of cmp is in R6
+000004 41000044		MOV	$str1,R1	*store addr of str1 in R1
+000008 42000000		MOV	$0,R2		*store WORDs from str1 in R2
+00000c 4300004c		MOV	$str2,R3	*store addr of str2 in R3
+000010 44000000		MOV	$0,R4		*store WORDs from str2 in R4
+000014 82100000	cmp	MOV	0(R1),R2	*shift WORD from str1 into R2
+000018 84300000		MOV	0(R3),R4	*shift WORD from str2 into R4
+00001c 41180004		ADD	R1,$4,R1	*increment str1 addr for next iteration
+000020 43380004		ADD	R3,$4,R3	*increment str2 addr for next iteration
+000024 05490002		SUB	R4,R2,R5	*compare WORDs
+000028 e1000003		JEQ	term		*if WORDs are equal check for terminus
+00002c 5600ffff		MOV	$-1,R6		*else STRINGZ are not equal: R6 = -1
+000030 40000004	end	MOV 	$4,R0
+000034 c7000010		SYSCALL
+000038 42290030	term	SUB	R2,$48,R2	*check for terminus: 48=X30='0'
+00003c e1fffffc		JEQ	end
+000040 e7fffff4		JMP	cmp
+
+000044 61746164	str1	STRINGZ 'data0'
+000048 00000030	
+00004c 61746164	str2	STRINGZ	'data0'
+000050 00000030	
+
+                Symbol Table
+S 0x000000 strt
+S 0x000014 cmp
+S 0x000030 end
+S 0x000038 term
+S 0x000044 str1
+S 0x00004c str2

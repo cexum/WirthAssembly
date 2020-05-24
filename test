@@ -1,0 +1,13 @@
+                *
+                * test.s: test concepts
+                *
+
+000000 4000000c	str	MOV	$val,R0
+000004 40080001		ADD	R0,$1,R0
+000008 e7ffffff	fin	JMP	fin	
+
+
+                Symbol Table
+S 0x000000 str
+S 0x000008 fin
+S 0x00000c val

@@ -1,0 +1,41 @@
+000000 41000058	start	MOV	$str1,R1	*store str1 addr in R1
+000004 43000068		MOV	$str2,R3	*store str2 addr in R3
+000008 f7000001		JMPL	cpychar
+00000c e700000c		JMP	end
+
+000010 92100000	cpychar MOVB	0(R1),R2	* str must be pre loaded
+000014 b2300000		MOVB	R2,0(R3)	* copy byte over
+000018 42290000		SUB	R2,$0,R2	
+00001c c100000f		JEQ	(R15)		* if terminus, exit function
+000020 41180001		ADD	R1,$1,R1	* increment addr
+000024 43380001		ADD	R3,$1,R3	* increment addr
+000028 e7fffff9		JMP	cpychar		* continue
+
+00002c 92100000	getchar MOVB	0(R1),R2	*str must be pre loaded
+000030 42290000		SUB	R2,$0,R2	
+000034 c100000f		JEQ	(R15)		* if terminus, exit function
+000038 41180001		ADD	R1,$1,R1
+00003c e7fffffb		JMP	getchar		* continue
+
+000040 40000000	end	MOV	$0,R0
+000044 c7000010		SYSCALL
+
+000048 69727473	str0	STRINGZ	'string literal0'
+00004c 6c20676e	
+000050 72657469	
+000054 00306c61	
+000058 69727473	str1	STRINGZ	'string literal0' 
+00005c 6c20676e	
+000060 72657469	
+000064 00306c61	
+000068 706d652a	str2	STRINGZ				*empty
+00006c 00007974	
+
+                Symbol Table
+S 0x000000 start
+S 0x000010 cpychar
+S 0x00002c getchar
+S 0x000040 end
+S 0x000048 str0
+S 0x000058 str1
+S 0x000068 str2

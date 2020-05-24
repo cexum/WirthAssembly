@@ -1,0 +1,46 @@
+00005c 00000000	
+000060 00000000	buf	STRINGZ	''		*store the ascii vals here.
+                *
+                * itoa.s	an exercise in stack tracing + recursion
+                *
+
+000000 4e002710	init	MOV	$stackb,R14	*stack is at base
+000004 4100005c		MOV	$val,R1		*load val addr
+000008 82100000		MOV	0(R1),R2	*move val value into R2
+00000c 46000060		MOV	$buf,R6		*load buf addr into R6
+000010 f7000001		JMPL	itoa
+000014 e700000e		JMP	end
+
+000018 4ee90008	itoa	SUB	R14,$8,R14	*allocate space on stack
+00001c afe00004		MOV	R15,4(R14)	*store link
+000020 422b000a		DIV	R2,$10,R2	*remove right most digit
+000024 23000000		MOV	H,R3		*get digit
+000028 a3e00008		MOV	R3,8(R14)	*store digit
+00002c 42290000		SUB	R2,$0,R2	*determine if there are more digits
+000030 f9fffff9		JNEL	itoa		*recurse
+000034 83e00008		MOV	8(R14),R3	*load digit
+000038 43380030		ADD	R3,$0X30,R3	*convert to ascii
+00003c a3600000		MOV	R3,0(R6)	*store ascii in buf
+000040 46680001		ADD	R6,$1,R6	*increment buf addr
+000044 8fe00004		MOV	4(R14),R15	*load link
+000048 4ee80008		ADD	R14,$8,R14	*move stack frame for next iteration
+00004c c700000f		JMP	(R15)		*jump link
+
+
+000050 40000004	end	MOV	$4,R0
+000054 c7000010			SYSCALL	
+
+000058 34333231	test	STRINGZ	'1234'		*test that strings match..
+00005c 00000000	
+       00002710	stackb	EQU	10000		*starting address of stack
+00005c 000004d2	val	WORD	1234		*convert to ascii...
+000060 00000000	buf	STRINGZ	''		*store the ascii vals here.
+
+                Symbol Table
+S 0x000000 init
+S 0x000018 itoa
+S 0x000050 end
+S 0x000058 test
+S 0x002710 stackb
+S 0x00005c val
+S 0x000060 buf

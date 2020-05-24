@@ -1,0 +1,35 @@
+000050 00000000	
+                *
+                * getchar.s	iterate through a string literal one char (nibble) a time
+                *
+
+000000 45000004	start	MOV	$iter,R5	* 4 iterations consumes 32 bits
+000004 41000048		MOV	$str,R1		* move addr of string into R1
+000008 47000000		MOV	$0,R7		* storing addr increments in R7
+00000c 82100000	getbyte	MOV	0(R1),R2	* shift 4 bytes of string into R2
+000010 42290000		SUB	R2,$0,R2	* if 0, byte is empty; jump to end
+000014 e100000a		JEQ	end
+000018 47780004		ADD	R7,$4,R7	* increment addr
+00001c 01180007		ADD	R1,R7,R1	* point address at next 4 bytes
+000020 44000000		MOV	$0,R4		* (re)set counter to 0
+000024 43210018	getchar	LSL	R2,$24,R3	* zero out first 24 bits, store in R3
+000028 43320018		ASR	R3,$24,R3	* isolate right most 8 bits. (got char..)
+00002c 42230008		ROR	R2,$8,R2	* move next byte into right most 8 bits
+000030 44480001		ADD	R4,$1,R4	* increment counter
+000034 06590004		SUB	R5,R4,R6	* attempt to throw flags ~(N!=V)
+000038 e1fffff4		JEQ	getbyte		* get the next byte
+00003c e7fffff9		JMP	getchar
+000040 40000004	end	MOV	$4,R0
+000044 c7000010		SYSCALL
+
+000048 64636261	str	STRINGZ	'abcdefgh'
+00004c 68676665	
+000050 00000000	
+
+                Symbol Table
+S 0x000000 start
+S 0x00000c getbyte
+S 0x000024 getchar
+S 0x000040 end
+S 0x000048 str
+S 0x000004 iter

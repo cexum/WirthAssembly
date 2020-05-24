@@ -1,0 +1,23 @@
+                *
+                * prog1.s: Our first assembler program
+                *
+000000 40000001		MOV	$1,R0		comments are here
+000004 41000002		MOV	$2,R1
+000008 020a0001		MUL	R0,R1,R2
+00000c a2300020		MOV	R2,ANS(R3)	move R2 to asnwer
+000010 e7ffffff	here	JMP	here
+000014 e7fffffa		JMP	start
+
+000018 00000002	ONE	WORD	2
+00001c 00000005	TWO	WORD	5
+000020 00000000	ANS	WORD	0
+
+
+                Symbol Table
+S 0x000000 start
+S 0x000010 here
+S 0x000018 ONE
+S 0x00001c TWO
+S 0x000020 ANS
+S 0x000024 end
+S 0x234566 bignum

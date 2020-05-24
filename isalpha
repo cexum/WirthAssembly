@@ -1,0 +1,26 @@
+#!/bin/wpemu -r -f
+                *
+                * isalpha.s	determine if a char is, or is not A-Z | a-z
+                *
+
+000000 4100002c		MOV	$char,R1
+000004 92100000		MOVB	0(R1),R2
+000008 43290029		SUB	R2,$41,R3
+00000c f6000005		JLEL	true
+000010 44000005		MOV	$5a,R4
+000014 03490002		SUB	R4,R2,R3
+000018 fd000002		JGEL	true
+
+
+00001c 40000004	exit	MOV	$4,R0
+000020 c7000010		SYSCALL
+
+000024 47000001	true	MOV	$1,R7
+000028 c700000f		JMP	(R15)
+
+00002c 00000044	char STRINGZ 'D'
+
+                Symbol Table
+S 0x00001c exit
+S 0x000024 true
+S 0x00002c char

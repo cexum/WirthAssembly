@@ -1,0 +1,165 @@
+#!/bin/wpemu -r -f
+0001a8 00000000	
+                *
+                * getwords2.s	a routine which pushes null terminated words to a BSS
+                *
+
+000000 480001b0	main	MOV	$buf,R8
+000004 490021b4		MOV	$rptr,R9
+000008 4a0021b0		MOV	$eptr,R10
+00000c a8900000		MOV	R8,0(R9)	*point rptr to buf
+000010 a8a00000		MOV	R8,0(R10)	*point eptr to buf
+000014 48000000		MOV	$0,R8
+000018 49000000		MOV	$0,R9
+00001c 4a000000		MOV	$0,R10
+000020 470021b8		MOV	$dest,R7
+000024 f700001c		JMPL	openf
+000028 f7000032	getwd	JMPL	getc
+00002c 03000000		MOV	R0,R3
+000030 44000041		MOV	$65,R4
+000034 05390004		SUB	R3,R4,R5	*if c >= 'A'
+000038 e800000c		JPL	isupr
+00003c 42390020		SUB	R3,$32,R2	*if c == ' '
+000040 e1000003		JEQ	addnull		
+000044 40090000		SUB	R0,$0,R0	*if < 'A', check for EOF(0)
+000048 e9fffff7		JNE	getwd
+00004c e1000005		JEQ	finish
+
+000050 40000000	addnull	MOV	$0,R0
+000054 e7000000		JMP	store	
+
+000058 b0700000	store	MOVB	R0,0(R7)
+00005c 47780001		ADD	R7,$1,R7
+000060 e7fffff1		JMP	getwd
+
+000064 f7000019	finish	JMPL	closef
+000068 e7000048		JMP	exit
+
+00006c 44000019	isupr	MOV	$25,R4	
+000070 05490005		SUB	R4,R5,R5
+000074 e8fffff8		JPL	store
+000078 e7000000		JMP	islwr		
+
+00007c 44000061	islwr	MOV	$97,R4
+000080 05390004		SUB	R3,R4,R5
+000084 e0ffffe8		JMI	getwd		*c >= 91 && c <= 96 
+000088 44000019		MOV	$25,R4
+00008c 05490005		SUB	R4,R5,R5
+000090 e8fffff1		JPL	store
+000094 e7ffffe4		JMP	getwd		*c >= 122
+
+000098 4ee90008	openf	SUB	R14,$8,R14	*allocate stack space
+00009c afe00008		MOV 	R15,8(R14)	*push link
+0000a0 41000194		MOV	$in,R1
+0000a4 a1e00000		MOV	R1,0(R14)	*push path
+0000a8 41000000		MOV	$mode,R1
+0000ac a1e00004		MOV	R1,4(R14)	*push mode
+0000b0 40000000		MOV	$open,R0
+0000b4 c7000010		SYSCALL
+0000b8 410001ac		MOV	$fd,R1
+0000bc a0100000		MOV	R0,0(R1)	*save fd
+0000c0 8fe00008		MOV	8(R14),R15	*pop link
+0000c4 4ee80008		ADD	R14,$8,R14	*move stack frame
+0000c8 c700000f		JMP	(R15)
+
+0000cc 4ee90004	closef	SUB	R14,$4,R14	*allocate stack space
+0000d0 afe00004		MOV	R15,4(R14)	*push link
+0000d4 410001ac		MOV	$fd,R1
+0000d8 82100000		MOV	0(R1),R2
+0000dc a2e00000		MOV	R2,0(R14)	*push fd
+0000e0 40000003		MOV	$close,R0
+0000e4 c7000010		SYSCALL
+0000e8 8fe00004		MOV	4(R14),R15	*pop link
+0000ec 4ee80004		ADD	R14,$4,R14	*move stack frame
+0000f0 c700000f		JMP	(R15)
+
+0000f4 480021b4	getc	MOV	$rptr,R8
+0000f8 490021b0		MOV	$eptr,R9
+0000fc 8a800000		MOV	0(R8),R10
+000100 8b900000		MOV	0(R9),R11
+000104 0ca9000b		SUB	R10,R11,R12
+000108 ed000006		JGE	readf
+00010c 90a00000	rtnc	MOVB	0(R10),R0
+000110 4aa80001		ADD	R10,$1,R10
+000114 aa800000		MOV	R10,0(R8)
+000118 c700000f		JMP	(R15)
+
+00011c 40000000	rtn0	MOV	$0,R0
+000120 c700000f		JMP	(R15)
+
+000124 4ee90008	readf	SUB	R14,$8,R14
+000128 410001ac		MOV	$fd,R1
+00012c 82100000		MOV	0(R1),R2
+000130 a2e00000		MOV	R2,0(R14)	*push fd
+000134 410001b0		MOV	$buf,R1
+000138 a1e00004		MOV	R1,4(R14)	*push buf
+00013c 41000004		MOV	$len,R1
+000140 a1e00008		MOV	R1,8(R14)	*push len
+000144 40000001		MOV	$read,R0
+000148 c7000010		SYSCALL
+00014c 410001a8		MOV	$n,R1		*technically can do this w/o label n
+000150 a0100000		MOV	R0,0(R1)	*save n
+000154 82100000		MOV	0(R1),R2
+000158 42290000		SUB	R2,$0,R2
+00015c e1ffffef		JEQ	rtn0		*if nothing read, return 0
+000160 480021b4		MOV	$rptr,R8
+000164 490021b0		MOV	$eptr,R9
+000168 4a0001b0		MOV	$buf,R10
+00016c aa800000		MOV	R10,0(R8)	*rptr is at buf[0]
+000170 0c00000a		MOV	R10,R12
+000174 8d800000		MOV	0(R8),R13
+000178 0b00000a		MOV	R10,R11
+00017c 0b28000b		ADD	R2,R11,R11	*add n to eptr to shift address limit
+000180 ab900000		MOV	R11,0(R9)	*store updated eptr
+000184 4ee80008		ADD	R14,$8,R14	*move stack frame
+000188 e7ffffe0		JMP	rtnc		*made read, continue with getc
+
+00018c 40000004	exit	MOV	$4,R0
+000190 c7000010		SYSCALL
+       ffffffff	stackb	EQU	FFFF
+000194 7273752f	in	STRINGZ '/usr/cde/wirth/words'
+000198 6564632f	
+00019c 7269772f	
+0001a0 772f6874	
+0001a4 7364726f	
+0001a8 00000000	
+       00000000	mode	EQU	0	*read
+       00000000	open	EQU	0	*SYSCALL
+       00000003	close	EQU	3	*SYSCALL
+       00000001	read	EQU	1	*SYSCALL
+0001a8 00000000	n	WORD	0	*bytes read by readf
+0001ac 00000000	fd	WORD	0
+               	buf	BSS	8192
+       00000004	len	EQU	4
+0021b0 00000000	eptr	WORD	0
+0021b4 00000000	rptr	WORD	0
+               	dest	BSS	24
+
+                Symbol Table
+S 0x000000 main
+S 0x000028 getwd
+S 0x000050 addnull
+S 0x000058 store
+S 0x000064 finish
+S 0x00006c isupr
+S 0x00007c islwr
+S 0x000098 openf
+S 0x0000cc closef
+S 0x0000f4 getc
+S 0x00010c rtnc
+S 0x00011c rtn0
+S 0x000124 readf
+S 0x00018c exit
+S 0xffffffff stackb
+S 0x000194 in
+S 0x000000 mode
+S 0x000000 open
+S 0x000003 close
+S 0x000001 read
+S 0x0001a8 n
+S 0x0001ac fd
+S 0x0001b0 buf
+S 0x000004 len
+S 0x0021b0 eptr
+S 0x0021b4 rptr
+S 0x0021b8 dest

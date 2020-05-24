@@ -1,0 +1,69 @@
+#!/bin/wpemu -r -f
+                *
+                * struct.s	manually create a bin tree; print the tree.
+                *
+
+000000 f7000004	main	JMPL	insnode
+000004 41002078		MOV	$data,R1	*load start of data
+000008 41180004		ADD	R1,$4,R1	*move address to next datum
+00000c f7000001		JMPL	insnode		*insert a new node into BST
+000010 e7000016		JMP	exit
+
+
+000014 4ee90008	insnode SUB	R14,$8,R14	*allocate stack frame
+000018 41002078		MOV	$data,R1	*load address of data
+00001c 82100000		MOV	0(R1),R2
+000020 a2e00008		MOV	R2,8(R14)	*push data
+000024 afe00004		MOV	R15,4(R14)	*push link
+000028 4d008000		MOV	$root,R13	*load address of root node
+00002c 88d00000	fndnode	MOV	0(R13),R8	*recur through BST until node == NULL
+000030 48890000		SUB	R8,$0,R8	*look for Z flag
+000034 e1000007		JEQ	newnode		*if node == NULL, call newnode
+000038 09890002		SUB	R8,R2,R9
+00003c e6000002		JLE	left		*if JLE, find open left leaf
+000040 e7000003		JMP	right		*else find open right leaf
+000044 e7000009		JMP	exit
+
+000048 47780001	left	ADD	R7,$1,R7
+00004c e7000007		JMP	exit
+
+000050 e7000006	right	JMP	exit
+
+000054 81e00008	newnode	MOV	8(R14),R1	*move address of data into R1
+000058 47780001		ADD	R7,$1,R7	*debugging information
+00005c a1d00000		MOV	R1,0(R13)	*push address of data into node
+000060 8fe00004		MOV	4(R14),R15	*pop link
+000064 4ee80008		ADD	R14,$8,R14	*move stack frame
+000068 c700000f		JMP	(R15)		*return
+
+00006c 40000004	exit	MOV	$4,R0
+000070 c7000010		SYSCALL
+
+               	tree	BSS	8192
+       00008000	root	EQU	32768
+002074 00000000	ptr	WORD	0
+002078 0000000b	data	WORD	11
+00207c 00000007		WORD	7
+002080 00000006		WORD	6
+002084 00000003		WORD	3
+002088 00000064	str1	STRINGZ	'd'
+00208c 00000061	str2	STRINGZ	'a'
+002090 00000074	str3	STRINGZ	't'
+002094 00000061	str4	STRINGZ	'a'
+
+                Symbol Table
+S 0x000000 main
+S 0x000014 insnode
+S 0x00002c fndnode
+S 0x000048 left
+S 0x000050 right
+S 0x000054 newnode
+S 0x00006c exit
+S 0x000074 tree
+S 0x008000 root
+S 0x002074 ptr
+S 0x002078 data
+S 0x002088 str1
+S 0x00208c str2
+S 0x002090 str3
+S 0x002094 str4

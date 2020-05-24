@@ -1,0 +1,150 @@
+                *
+                * stringlog.s	read from stdin, append to file
+                *
+000000 4e00ffff	main	MOV	$stackb,R14
+000004 f7000015		JMPL	openf
+000008 f7000037		JMPL	readf
+00000c f700002e		JMPL	closef
+000010 f7000005		JMPL	getchar
+000014 f7000042		JMPL	concat
+000018 f7000010		JMPL	openf
+00001c f700001c		JMPL	writef
+000020 f7000029		JMPL	closef
+000024 e700004f		JMP	exit
+
+000028 4ee9000c	getchar	SUB	R14,$12,R14	*allocate stack
+00002c afe0000c		MOV	R15,12(R14)	*push link
+000030 41000000		MOV	$stdin,R1	
+000034 a1e00000		MOV	R1,0(R14)	*push fd
+000038 41000184		MOV	$ibuf,R1
+00003c a1e00004		MOV	R1,4(R14)	*push buf
+000040 41000400		MOV	$len,R1
+000044 a1e00008		MOV	R1,8(R14)	*push len
+000048 40000001		MOV	$read,R0	*read stdin
+00004c c7000010			SYSCALL
+000050 8fe0000c		MOV	12(R14),R15	*pop link
+000054 4ee8000c		ADD	R14,$12,R14
+000058 c700000f		JMP	(R15)
+
+00005c 4ee90008	openf	SUB	R14,$8,R14	*allocate stack
+000060 afe00008		MOV	R15,8(R14)	*push link
+000064 4100016c		MOV	$path,R1
+000068 a1e00000		MOV	R1,0(R14)	*push path
+00006c 41000002		MOV	$mode,R1
+000070 a1e00004		MOV	R1,4(R14)	*push mode
+000074 40000000		MOV	$open,R0	*open file
+000078 c7000010			SYSCALL
+00007c 41000180		MOV	$fd,R1	
+000080 a0100000		MOV	R0,0(R1)	*store fd
+000084 8fe00008		MOV	8(R14),R15	*pop link
+000088 4ee80008		ADD	R14,$8,R14	*move stack frame
+00008c c700000f		JMP	(R15)
+
+000090 4ee9000c	writef	SUB	R14,$12,R14	*allocate stack
+000094 afe0000c		MOV	R15,12(R14)	*push link
+000098 41000180		MOV	$fd,R1
+00009c 82100000		MOV	0(R1),R2
+0000a0 a2e00000		MOV	R2,0(R14)	*push fd
+0000a4 41002c94		MOV	$tbuf,R1
+0000a8 a1e00004		MOV	R1,4(R14)	*push buf
+0000ac 410053a4		MOV	$tlen,R1
+0000b0 a1e00008		MOV	R1,8(R14)	*push len
+0000b4 40000002		MOV	$write,R0	*write buf to file
+0000b8 c7000010			SYSCALL
+0000bc 8fe0000c		MOV	12(R14),R15	*pop link
+0000c0 4ee8000c		ADD	R14,$12,R14	*move stack frame
+0000c4 c700000f		JMP	(R15)
+
+0000c8 4ee90004	closef	SUB 	R14,$4,R14
+0000cc afe00004		MOV	R15,4(R14)	*push link
+0000d0 41000180		MOV	$fd,R1
+0000d4 a2e00000		MOV	R2,0(R14)	*push fd
+0000d8 40000003		MOV	$close,R0
+0000dc c7000010			SYSCALL
+0000e0 8fe00004		MOV	4(R14),R15
+0000e4 c700000f		JMP	(R15)
+
+0000e8 4ee9000c	readf	SUB	R14,$12,R14	*allocate stack
+0000ec afe0000c		MOV	R15,12(R14)	*push link
+0000f0 41000180		MOV	$fd,R1
+0000f4 82100000		MOV	0(R1),R2	
+0000f8 a2e00000		MOV	R2,0(R14)	*push fd
+0000fc 41000584		MOV	$fbuf,R1
+000100 a1e00004		MOV	R1,4(R14)	*push fbuf
+000104 41002710		MOV	$flen,R1
+000108 a1e00008		MOV	R1,8(R14)	*push flen
+00010c 40000001		MOV	$read,R0	*read fd
+000110 c7000010			SYSCALL
+000114 8fe0000c		MOV	12(R14),R15	*pop link
+000118 4ee8000c		ADD	R14,$12,R14
+00011c c700000f		JMP	(R15)
+
+000120 41000584	concat	MOV	$fbuf,R1	*concat fbuf and ibuf
+000124 43002c94		MOV	$tbuf,R3	*load addresses
+000128 92100000	cpyf	MOVB	0(R1),R2	*copy fbuf to tbuf
+00012c b2300000		MOVB	R2,0(R3)
+000130 42290000		SUB	R2,$0,R2	*check for end of buf
+000134 e1000003		JEQ	loadi			
+000138 41180001		ADD	R1,$1,R1
+00013c 43380001		ADD	R3,$1,R3
+000140 e7fffff9		JMP	cpyf
+000144 41000184	loadi	MOV	$ibuf,R1	*load address of ibuf
+000148 92100000	cpyi	MOVB	0(R1),R2	*concat ibuf to tbuf
+00014c b2300000		MOVB	R2,0(R3)
+000150 42290000		SUB	R2,$0,R2
+000154 c100000f		JEQ	(R15)		*end of input, jump to link
+000158 41180001		ADD	R1,$1,R1
+00015c 43380001		ADD	R3,$1,R3
+000160 e7fffff9		JMP	cpyi
+
+000164 40000004	exit	MOV	$4,R0
+000168 c7000010			SYSCALL
+
+00016c 7273752f	path	STRINGZ	'/usr/cde/wirth/log'
+000170 6564632f	
+000174 7269772f	
+000178 6c2f6874	
+00017c 0000676f	
+       00000000	open	EQU	0
+       00000003	close	EQU	3
+       00000002	mode	EQU	2		*open mode 2: read and write
+000180 00000000	fd	WORD	0		*store fd
+       00000001	read	EQU	1
+       00000002	write	EQU	2
+       00000000	stdin	EQU	0
+       0000ffff	stackb	EQU	0XFFFF
+               	ibuf	BSS	1024		*store line from stdin
+       00000400	len	EQU	1024
+               	fbuf	BSS	10000		*store contents of log
+       00002710	flen	EQU	10000
+               	tbuf	BSS	10000		*concatenate fbuf + ibuf
+               	tlen	BSS	10000
+
+
+                Symbol Table
+S 0x000000 main
+S 0x000028 getchar
+S 0x00005c openf
+S 0x000090 writef
+S 0x0000c8 closef
+S 0x0000e8 readf
+S 0x000120 concat
+S 0x000128 cpyf
+S 0x000144 loadi
+S 0x000148 cpyi
+S 0x000164 exit
+S 0x00016c path
+S 0x000000 open
+S 0x000003 close
+S 0x000002 mode
+S 0x000180 fd
+S 0x000001 read
+S 0x000002 write
+S 0x000000 stdin
+S 0x00ffff stackb
+S 0x000184 ibuf
+S 0x000400 len
+S 0x000584 fbuf
+S 0x002710 flen
+S 0x002c94 tbuf
+S 0x0053a4 tlen

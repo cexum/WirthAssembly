@@ -1,0 +1,88 @@
+#!/bin/wpemu -r -f
+0000d0 00000000	
+                *
+                * readwords.s	read a text file; store words in a buffer spaced by null
+                *
+000000 4e00ffff	main	MOV	$stackb,R14
+000004 f7000003		JMPL	openf
+000008 f7000011		JMPL	readf
+00000c f700001e		JMPL	closef
+000010 e7000027		JMP	exit
+
+000014 4ee90008	openf	SUB	R14,$8,R14	*allocate stack
+000018 afe00008		MOV	R15,8(R14)	*push link
+00001c 410000bc		MOV	$path,R1
+000020 a1e00000		MOV	R1,0(R14)	*push path
+000024 41000000		MOV	$mode,R1
+000028 a1e00004		MOV	R1,4(R14)	*push mode
+00002c 40000000		MOV	$open,R0
+000030 c7000010		SYSCALL
+000034 410000b8		MOV	$fd,R1
+000038 a0100000		MOV	R0,0(R1)	*save fd
+00003c 8fe00008		MOV	8(R14),R15	*pop link
+000040 4ee80008		ADD	R14,$8,R14	*move stack frame
+000044 c700000f		JMP	(R15)		
+
+000048 47780001	test	ADD	R7,$1,R7
+00004c e7000018		JMP	exit
+
+000050 4ee9000c	readf	SUB	R14,$12,R14	*allocate stack
+000054 afe0000c		MOV	R15,12(R14)	*push link
+000058 410000b8		MOV	$fd,R1
+00005c 82100000		MOV	0(R1),R2	
+000060 a2e00000		MOV	R2,0(R14)	*push fd
+000064 410000d0		MOV	$fbuf,R1
+000068 a1e00004		MOV	R1,4(R14)	*push file buf
+00006c 41000004		MOV	$len,R1
+000070 a1e00008		MOV	R1,8(R14)	*push len
+000074 40000001		MOV	$read,R0	*read file
+000078 c7000010		SYSCALL			*get WORD from file
+00007c 8fe0000c		MOV	12(R14),R15	*pop link
+000080 4ee8000c		ADD	R14,$12,R14	*move stack frame
+000084 c700000f		JMP	(R15)
+
+000088 4ee90004	closef	SUB	R14,$4,R14	*allocate stack
+00008c afe00004		MOV	R15,4(R14)	*push link
+000090 410000b8		MOV	$fd,R1
+000094 82100000		MOV	0(R1),R2
+000098 a2e00000		MOV	R2,0(R14)	*push fd
+00009c 40000003		MOV	$close,R0
+0000a0 c7000010		SYSCALL
+0000a4 8fe00004		MOV	4(R14),R15
+0000a8 4ee80004		ADD	R14,$4,R14	*move stack frame
+0000ac c700000f		JMP	(R15)
+
+0000b0 40000004	exit	MOV	$4,R0
+0000b4 c7000010			SYSCALL
+
+       0000ffff	stackb	EQU	0XFFFF
+0000b8 00000000	fd	WORD	0
+       00000000	mode	EQU	0		*read mode
+       00000000	open	EQU	0		*SYSCALL
+       00000003	close	EQU	3		*SYSCALL
+       00000001	read	EQU	1		*SYSCALL
+0000bc 7273752f	path	STRINGZ	'/usr/cde/wirth/words
+0000c0 6564632f	
+0000c4 7269772f	
+0000c8 772f6874	
+0000cc 7364726f	
+0000d0 00000000	
+               	fbuf	BSS	512			
+       00000004	len	EQU	4	
+
+                Symbol Table
+S 0x000000 main
+S 0x000014 openf
+S 0x000048 test
+S 0x000050 readf
+S 0x000088 closef
+S 0x0000b0 exit
+S 0x00ffff stackb
+S 0x0000b8 fd
+S 0x000000 mode
+S 0x000000 open
+S 0x000003 close
+S 0x000001 read
+S 0x0000bc path
+S 0x0000d0 fbuf
+S 0x000004 len

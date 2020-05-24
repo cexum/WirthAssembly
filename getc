@@ -1,0 +1,135 @@
+#!/bin/wpemu -r -f
+000158 00000000	
+                *
+                * getc.s	a routine which fetches next char from a file 'till 0
+                *		(EOF) is reached
+                *
+
+000000 48000160	main	MOV	$buf,R8
+000004 49002164		MOV	$rptr,R9
+000008 4a002160		MOV	$eptr,R10
+00000c a8900000		MOV	R8,0(R9)	*point rptr to buf
+000010 a8a00000		MOV	R8,0(R10)	*point eptr to buf
+000014 48000000		MOV	$0,R8
+000018 49000000		MOV	$0,R9
+00001c 4a000000		MOV	$0,R10
+000020 47002168		MOV	$dest,R7
+000024 f7000008		JMPL	openf
+000028 f700001e	storef	JMPL	getc
+00002c 06000000		MOV	R0,R6
+000030 b0700000		MOVB	R0,0(R7)
+000034 47780001		ADD	R7,$1,R7
+000038 40090000		SUB	R0,$0,R0
+00003c e9fffffa		JNE	storef
+000040 f700000e		JMPL	closef
+000044 e700003d		JMP	exit
+
+000048 4ee90008	openf	SUB	R14,$8,R14	*allocate stack space
+00004c afe00008		MOV 	R15,8(R14)	*push link
+000050 41000144		MOV	$in,R1
+000054 a1e00000		MOV	R1,0(R14)	*push path
+000058 41000000		MOV	$mode,R1
+00005c a1e00004		MOV	R1,4(R14)	*push mode
+000060 40000000		MOV	$open,R0
+000064 c7000010		SYSCALL
+000068 4100015c		MOV	$fd,R1
+00006c a0100000		MOV	R0,0(R1)	*save fd
+000070 8fe00008		MOV	8(R14),R15	*pop link
+000074 4ee80008		ADD	R14,$8,R14	*move stack frame
+000078 c700000f		JMP	(R15)
+
+00007c 4ee90004	closef	SUB	R14,$4,R14	*allocate stack space
+000080 afe00004		MOV	R15,4(R14)	*push link
+000084 4100015c		MOV	$fd,R1
+000088 82100000		MOV	0(R1),R2
+00008c a2e00000		MOV	R2,0(R14)	*push fd
+000090 40000003		MOV	$close,R0
+000094 c7000010		SYSCALL
+000098 8fe00004		MOV	4(R14),R15	*pop link
+00009c 4ee80004		ADD	R14,$4,R14	*move stack frame
+0000a0 c700000f		JMP	(R15)
+
+0000a4 48002164	getc	MOV	$rptr,R8
+0000a8 49002160		MOV	$eptr,R9
+0000ac 8a800000		MOV	0(R8),R10
+0000b0 8b900000		MOV	0(R9),R11
+0000b4 0ca9000b		SUB	R10,R11,R12
+0000b8 ed000006		JGE	readf
+0000bc 90a00000	rtnc	MOVB	0(R10),R0
+0000c0 4aa80001		ADD	R10,$1,R10
+0000c4 aa800000		MOV	R10,0(R8)
+0000c8 c700000f		JMP	(R15)
+
+0000cc 40000000	rtn0	MOV	$0,R0
+0000d0 c700000f		JMP	(R15)
+
+0000d4 4ee90008	readf	SUB	R14,$8,R14
+0000d8 4100015c		MOV	$fd,R1
+0000dc 82100000		MOV	0(R1),R2
+0000e0 a2e00000		MOV	R2,0(R14)	*push fd
+0000e4 41000160		MOV	$buf,R1
+0000e8 a1e00004		MOV	R1,4(R14)	*push buf
+0000ec 41000001		MOV	$len,R1
+0000f0 a1e00008		MOV	R1,8(R14)	*push len
+0000f4 40000001		MOV	$read,R0
+0000f8 c7000010		SYSCALL
+0000fc 41000158		MOV	$n,R1		*technically can do this w/o label n
+000100 a0100000		MOV	R0,0(R1)	*save n
+000104 82100000		MOV	0(R1),R2
+000108 42290000		SUB	R2,$0,R2
+00010c e1ffffef		JEQ	rtn0		*if nothing read, return 0
+000110 48002164		MOV	$rptr,R8
+000114 49002160		MOV	$eptr,R9
+000118 4a000160		MOV	$buf,R10
+00011c aa800000		MOV	R10,0(R8)	*rptr is at buf[0]
+000120 0c00000a		MOV	R10,R12
+000124 8d800000		MOV	0(R8),R13
+000128 0b00000a		MOV	R10,R11
+00012c 0b28000b		ADD	R2,R11,R11	*add n to eptr to shift address limit
+000130 ab900000		MOV	R11,0(R9)	*store updated eptr
+000134 4ee80008		ADD	R14,$8,R14	*move stack frame
+000138 e7ffffe0		JMP	rtnc		*made read, continue with getc
+
+00013c 40000004	exit	MOV	$4,R0
+000140 c7000010		SYSCALL
+
+000144 7273752f	in	STRINGZ '/usr/cde/wirth/words'
+000148 6564632f	
+00014c 7269772f	
+000150 772f6874	
+000154 7364726f	
+000158 00000000	
+       00000000	mode	EQU	0	*read
+       00000000	open	EQU	0	*SYSCALL
+       00000003	close	EQU	3	*SYSCALL
+       00000001	read	EQU	1	*SYSCALL
+000158 00000000	n	WORD	0	*bytes read by readf
+00015c 00000000	fd	WORD	0
+               	buf	BSS	8192
+       00000001	len	EQU	1
+002160 00000000	eptr	WORD	0
+002164 00000000	rptr	WORD	0
+               	dest	BSS	24
+
+                Symbol Table
+S 0x000000 main
+S 0x000028 storef
+S 0x000048 openf
+S 0x00007c closef
+S 0x0000a4 getc
+S 0x0000bc rtnc
+S 0x0000cc rtn0
+S 0x0000d4 readf
+S 0x00013c exit
+S 0x000144 in
+S 0x000000 mode
+S 0x000000 open
+S 0x000003 close
+S 0x000001 read
+S 0x000158 n
+S 0x00015c fd
+S 0x000160 buf
+S 0x000001 len
+S 0x002160 eptr
+S 0x002164 rptr
+S 0x002168 dest

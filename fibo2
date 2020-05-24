@@ -1,0 +1,24 @@
+                *
+                * fibo.s: an exercise in looping and decision making to
+                * implement a fibonacci sequence
+                *
+000000 40000000	init	MOV	$0,R0
+000004 41000001		MOV	$1,R1
+000008 42000001		MOV	$1,R2
+00000c 4400000a		MOV	$MAX,R4
+000010 00180002	fibo	ADD	R1,R2,R0
+000014 01000002		MOV	R2,R1
+000018 02000000		MOV	R0,R2
+00001c 03490002		SUB	R4,R2,R3 	*subtract max from last fib
+000020 e5000001		JLT	end
+000024 e7fffffa	cont	JMP	fibo
+000028 40000004	end	MOV	$4,R0
+00002c c7000010		SYSCALL
+
+
+                Symbol Table
+S 0x000000 init
+S 0x000010 fibo
+S 0x000024 cont
+S 0x000028 end
+S 0x00000a MAX
