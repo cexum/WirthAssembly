@@ -1,0 +1,43 @@
+                *
+                * fileio.s	open and read a file
+                *
+
+000000 4e00ffff	main	MOV	$stackb,R14
+
+000004 4ee9000c	getchar	SUB	R14,$12,R14
+000008 41000000		MOV	$fd,R1
+00000c a1e00004		MOV	R1,4(R14)
+000010 4100004c		MOV	$buf,R1
+000014 a1e00008		MOV	R1,8(R14)
+000018 41000400		MOV	$len,R1
+00001c a1e0000c		MOV	R1,12(R14)
+000020 40000001		MOV	$1,R0
+000024 c7000010		SYSCALL
+
+000028 40000004	exit	MOV	$4,R0
+00002c c7000010		SYSCALL
+
+000030 7273752f	path	STRINGZ	/usr/cde/wirth/scratch/data
+000034 6564632f	
+000038 7269772f	
+00003c 732f6874	
+000040 74617263	
+000044 642f6863	
+000048 00617461	
+
+               	buf	BSS	1024
+       00000400	len	EQU	1024
+       00000001	read	EQU	1
+       00000000	fd	EQU	0
+       0000ffff	stackb	EQU	0XFFFF
+
+                Symbol Table
+S 0x000000 main
+S 0x000004 getchar
+S 0x000028 exit
+S 0x000030 path
+S 0x00004c buf
+S 0x000400 len
+S 0x000001 read
+S 0x000000 fd
+S 0x00ffff stackb

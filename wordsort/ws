@@ -1,0 +1,436 @@
+#!/bin/wpemu -r -f
+                *
+                * ws.s	read in a list of words; build and print a bst.
+                *
+
+000000 f70000a5	main	JMPL	getlist		*get a list of null terminated words
+000004 f700002e		JMPL	maketr		*populate bin tree
+000008 f7000002		JMPL	badprnt		*print in order of population
+00000c f70000d9		JMPL	wrtstdo		*write to stdout
+000010 e7000111		JMP	exit
+
+000014 410048b4	badprnt	MOV	$bst,R1		*prints the list, but without regard to order
+000018 470088c0		MOV	$pptr,R7
+00001c 88700000		MOV	0(R7),R8	*addr of print buffer
+000020 82100000	nulchk	MOV	0(R1),R2
+000024 42290000		SUB	R2,$0,R2
+000028 c100000f		JEQ	(R15)
+00002c 93200000	pwrd2	MOVB	0(R2),R3
+000030 b3800000		MOVB	R3,0(R8)
+000034 48880001		ADD	R8,$1,R8	*increment pbuf
+000038 42280001		ADD	R2,$1,R2	*increment word index
+00003c 43390000		SUB	R3,$0,R3
+000040 e9fffffa		JNE	pwrd2
+000044 48890001		SUB	R8,$1,R8	*move back to index with 0
+000048 4900002c		MOV	$comma,R9
+00004c a9800000		MOV	R9,0(R8)	*inject a ','
+000050 48880001		ADD	R8,$1,R8	*move index to start of next word
+000054 4118000c		ADD	R1,$12,R1	*increment to next node
+000058 e7fffff1		JMP	nulchk
+
+00005c 4ee9000c	printtr	SUB	R14,$12,R14	*allocate stack space
+000060 afe00004		MOV	R15,4(R14)	*push link
+000064 410048b4		MOV	$bst,R1		*address of root
+000068 a1e00008		MOV	R1,8(R14)	*push address of root
+00006c 420088c0		MOV	$pptr,R2	
+000070 a2e0000c		MOV	R2,12(R14)	*push pointer to print buf
+000074 81e00008	print	MOV	8(R14),R1	*load address of node
+000078 82100000		MOV	0(R1),R2	*load address of pointer
+00007c 87e0000c		MOV	12(R14),R7	*load ptr to print buf
+000080 88700000		MOV	0(R7),R8	*load address of print buf
+000084 93200000	pwrd	MOVB	0(R2),R3
+000088 b3800000		MOVB	R3,0(R8)
+00008c 48880001		ADD	R8,$1,R8	*increment pbuf
+000090 42280001		ADD	R2,$1,R2	*increment word index
+000094 43390000		SUB	R3,$0,R3
+000098 e9fffffa		JNE	pwrd
+00009c 48890001		SUB	R8,$1,R8	*move back to index with 0
+0000a0 4900002c		MOV	$comma,R9
+0000a4 a9800000		MOV	R9,0(R8)	*inject a ','
+0000a8 48880001		ADD	R8,$1,R8	*move index to start of next word
+0000ac a8700000		MOV	R8,0(R7)	*load new address to pptr
+0000b0 a7e0000c	br	MOV	R7,12(R14)	*push back onto stack
+0000b4 8fe00004	printlv	MOV	4(R14),R15
+0000b8 4ee80008		ADD	R14,$8,R14
+0000bc c700000f		JMP	(R15)
+
+0000c0 4ee90004	maketr	SUB	R14,$4,R14
+0000c4 afe00004		MOV	R15,4(R14)
+0000c8 f7000067	nextnd	JMPL	getword
+0000cc f7000002		JMPL	valword
+0000d0 f700000a		JMPL	insnode
+0000d4 e7fffffc		JMP	nextnd
+
+0000d8 410044ac	valword	MOV	$wptr,R1	*make sure word is not empty.
+0000dc 82100000		MOV	0(R1),R2
+0000e0 83200000		MOV	0(R2),R3
+0000e4 43390000		SUB	R3,$0,R3
+0000e8 e1000001		JEQ	fin
+0000ec c700000f		JMP	(R15)
+0000f0 8fe00004	fin	MOV	4(R14),R15
+0000f4 4ee80004		ADD	R14,$4,R14
+0000f8 c700000f		JMP	(R15)
+
+0000fc 4ee90010	insnode	SUB	R14,$16,R14	*allocate stack space
+000100 afe00000		MOV	R15,0(R14)	*push link
+000104 480044ac		MOV	$wptr,R8	*address of wptr
+000108 89800000		MOV	0(R8),R9	*address of current word
+00010c a9e00004		MOV	R9,4(R14)	*push address of current word
+000110 410048b4		MOV	$bst,R1		*load address of bst
+000114 420068b4		MOV	$ptr,R2		*load address of pointer
+000118 a1200000		MOV	R1,0(R2)	*store head of bst in ptr
+00011c a2e00008		MOV	R2,8(R14)	*push ptr to stack
+000120 82e00008	insert	MOV	8(R14),R2	*insert routine
+000124 83200000		MOV	0(R2),R3	*load val of pointer (its an address)
+000128 84300000		MOV	0(R3),R4	*get value of the node
+00012c 44490000		SUB	R4,$0,R4	*see if node is 0 (null)
+000130 e1000046		JEQ	newnode
+000134 f7000007		JMPL	strcmp		*R12 wasn't being used..
+000138 40090000		SUB	R0,$0,R0
+00013c e1000002		JEQ	nxtnd		*new node is equal, discard
+000140 e8000024		JPL	fndlft		*new val is < node, find left leaf
+000144 e7000016		JMP	fndrgt
+
+000148 8fe00000	nxtnd	MOV	0(R14),R15
+00014c 4ee80010		ADD	R14,$16,R14
+000150 c700000f		JMP	(R15)
+
+000154 81e00008	strcmp	MOV	8(R14),R1	*pop node ptr
+000158 82100000		MOV	0(R1),R2	*address at ptr
+00015c 83200000		MOV	0(R2),R3
+000160 84e00004		MOV	4(R14),R4	*pop address of current word ptr
+000164 40000000		MOV	$0,R0		*default return value
+000168 96300000	cmp	MOVB	0(R3),R6	*byte from node ptr
+00016c 95400000		MOVB	0(R4),R5	*byte from current word
+000170 45590000		SUB	R5,$0,R5	
+000174 c100000f		JEQ	(R15)		*end of word; return
+000178 43380001		ADD	R3,$1,R3	*increment existing word
+00017c 44480001		ADD	R4,$1,R4	*increment current word
+000180 00690005		SUB	R6,R5,R0
+000184 e1fffff8		JEQ	cmp		*characters match, check next char
+000188 e8000001		JPL	gt
+00018c e7000002		JMP	lt
+
+000190 5000ffff	gt	MOV	$-1,R0		*greater than... return -1
+000194 c700000f		JMP	(R15)
+
+000198 40000001	lt	MOV	$1,R0		*less than... return 1
+00019c c700000f		JMP	(R15)	
+
+0001a0 81e00008	fndrgt	MOV	8(R14),R1	*get ptr address (set by caller)
+0001a4 82100000	here	MOV	0(R1),R2	*get address of (current) node
+0001a8 42280008		ADD	R2,$8,R2	*increment to address of right leaf
+0001ac a2e0000c		MOV	R2,12(R14)	*push leaf address
+0001b0 83200000		MOV	0(R2),R3	*load leaf (address to another node)
+0001b4 43390000		SUB	R3,$0,R3	*see if value (addr) is 0 (null node)
+0001b8 e100001c		JEQ	insleaf		*null case
+0001bc 81e0000c		MOV	12(R14),R1	*load leaf addr
+0001c0 82100000		MOV	0(R1),R2	*load node addr
+0001c4 83e00008		MOV	8(R14),R3	*load ptr
+0001c8 a2300000		MOV	R2,0(R3)	*push node addr to ptr
+0001cc a3e00008		MOV	R3,8(R14)	*push ptr back on stack
+0001d0 e7ffffd3		JMP	insert		*!null case
+
+0001d4 81e00008	fndlft	MOV	8(R14),R1	*get ptr address (set by caller)
+0001d8 82100000	there	MOV	0(R1),R2	*get address of (current) node
+0001dc 42280004		ADD	R2,$4,R2	*increment to address of left leaf
+0001e0 a2e0000c		MOV	R2,12(R14)	*push leaf address
+0001e4 83200000		MOV	0(R2),R3	*load leaf (address to another node)
+0001e8 43390000		SUB	R3,$0,R3	*see if value (addr) is 0 (null node)
+0001ec e100000f		JEQ	insleaf		*null case
+0001f0 81e0000c		MOV	12(R14),R1	*load leaf addr
+0001f4 82100000		MOV	0(R1),R2	*load node addr
+0001f8 83e00008		MOV	8(R14),R3	*load ptr
+0001fc a2300000		MOV	R2,0(R3)	*push node addr to ptr
+000200 a3e00008		MOV	R3,8(R14)	*push ptr back on stack
+000204 e7ffffc6		JMP	insert		*!null case
+
+000208 81e00008	fndopen	MOV	8(R14),R1	*load ptr
+00020c 82100000		MOV	0(R1),R2	*load current addr of pointer
+000210 4228000c		ADD	R2,$12,R2	*increment to next data node addr
+000214 a2100000		MOV	R2,0(R1)	*update ptr
+000218 a1e00008		MOV	R1,8(R14)	*put updated ptr back on the stack
+00021c 81200000		MOV	0(R2),R1	*load data
+000220 41190000		SUB	R1,$0,R1	*test for null (0)
+000224 e9fffff8		JNE	fndopen		*if !null, get next node
+000228 c700000f		JMP	(R15)		*else return with open node addr in 8(R14)
+
+00022c f7fffff6	insleaf	JMPL	fndopen		*locate next open node
+000230 81e0000c		MOV	12(R14),R1	*load address of leaf
+000234 82e00008		MOV	8(R14),R2	*load node addr
+000238 83200000		MOV	0(R2),R3	*load open node address
+00023c a3100000		MOV	R3,0(R1)	*store open node addr in the leaf
+000240 e7ffffb7		JMP	insert
+
+000244 47780001	debug	ADD	R7,$1,R7	*debugging information
+000248 e7000083		JMP	exit
+
+00024c 81e00008	newnode MOV	8(R14),R1	*assumes ptr has been set by caller
+000250 82100000		MOV	0(R1),R2	*load node address
+000254 83e00004		MOV	4(R14),R3	*pop address of current word
+000258 a3200000		MOV	R3,0(R2)	*populate node with address
+00025c 8fe00000		MOV	0(R14),R15
+000260 4ee80010		ADD	R14,$16,R14	*shift stack frame
+000264 c700000f		JMP	(R15)
+
+000268 410044a8	getword	MOV	$dptr,R1	
+00026c 82100000		MOV	0(R1),R2	*address of dest
+000270 87100000		MOV	0(R1),R7	*first index of new word
+000274 430044ac		MOV	$wptr,R3
+000278 95200000	popb	MOVB	0(R2),R5	*pop byte (char)
+00027c 42280001		ADD	R2,$1,R2	*increment addr to next byte
+000280 45590000		SUB	R5,$0,R5	*check for null terminus
+000284 e1000001		JEQ	saveptr		*return
+000288 e7fffffb		JMP	popb
+00028c a2100000	saveptr	MOV	R2,0(R1)	*dptr now points to next word
+000290 a7300000		MOV	R7,0(R3)	*wptr now points to current word
+000294 c700000f		JMP	(R15)		*return
+
+000298 4d000460	getlist MOV	$rtrn,R13
+00029c afd00000		MOV	R15,0(R13)
+0002a0 480004a0		MOV	$buf,R8
+0002a4 490024a4		MOV	$rptr,R9
+0002a8 4a0024a0		MOV	$eptr,R10
+0002ac a8900000		MOV	R8,0(R9)	*point rptr to buf
+0002b0 a8a00000		MOV	R8,0(R10)	*point eptr to buf
+0002b4 48000000		MOV	$0,R8
+0002b8 49000000		MOV	$0,R9
+0002bc 4a000000		MOV	$0,R10
+0002c0 470024a8		MOV	$dest,R7
+0002c4 f700001e		JMPL	openf
+0002c8 f700003d	getwd	JMPL	getc
+0002cc 03000000	b	MOV	R0,R3
+0002d0 44000041		MOV	$65,R4
+0002d4 05390004		SUB	R3,R4,R5	*if c >= 'A'
+0002d8 e800000e		JPL	isupr
+0002dc 42390020		SUB	R3,$32,R2	*if c == ' ' add null space to dest
+0002e0 e1000003		JEQ	addnull		
+0002e4 40090000		SUB	R0,$0,R0	*if c < 'A', check for EOF(0)
+0002e8 e9fffff7		JNE	getwd
+0002ec e1000005		JEQ	finish
+
+0002f0 40000000	addnull	MOV	$0,R0		*found ' ', interpret as end of word
+0002f4 e7000000		JMP	store	
+
+0002f8 b0700000	store	MOVB	R0,0(R7)
+0002fc 47780001		ADD	R7,$1,R7
+000300 e7fffff1		JMP	getwd
+
+000304 f7000024	finish	JMPL	closef
+000308 4d000460		MOV	$rtrn,R13
+00030c 8fd00000		MOV	0(R13),R15
+000310 c700000f		JMP	(R15)
+
+000314 44000019	isupr	MOV	$25,R4	
+000318 05490005		SUB	R4,R5,R5
+00031c e8fffff6		JPL	store
+000320 e7000000		JMP	islwr		
+
+000324 44000061	islwr	MOV	$97,R4
+000328 05390004		SUB	R3,R4,R5
+00032c e0ffffe6		JMI	getwd		*c >= 91 && c <= 96 
+000330 44000019		MOV	$25,R4
+000334 05490005		SUB	R4,R5,R5
+000338 e8ffffef		JPL	store
+00033c e7ffffe2		JMP	getwd		*c >= 122
+
+000340 4ee90008	openf	SUB	R14,$8,R14	*allocate stack space
+000344 afe00008		MOV 	R15,8(R14)	*push link
+000348 41000464		MOV	$in,R1
+00034c a1e00000		MOV	R1,0(R14)	*push path
+000350 41000000		MOV	$mode,R1
+000354 a1e00004		MOV	R1,4(R14)	*push mode
+000358 40000000		MOV	$open,R0
+00035c c7000010		SYSCALL
+000360 4100049c		MOV	$fd,R1
+000364 a0100000		MOV	R0,0(R1)	*save fd
+000368 8fe00008		MOV	8(R14),R15	*pop link
+00036c 4ee80008		ADD	R14,$8,R14	*move stack frame
+000370 c700000f		JMP	(R15)
+
+000374 41000001	wrtstdo	MOV	$1,R1
+000378 a1e00000		MOV	R1,0(R14)
+00037c 410068c0		MOV	$pbuf,R1
+000380 a1e00004		MOV	R1,4(R14)
+000384 41002000		MOV	$plen,R1
+000388 a1e00008		MOV	R1,8(R14)
+00038c 40000002		MOV	$2,R0
+000390 c7000010		SYSCALL
+000394 c700000f		JMP	(R15)
+
+000398 4ee90004	closef	SUB	R14,$4,R14	*allocate stack space
+00039c afe00004		MOV	R15,4(R14)	*push link
+0003a0 4100049c		MOV	$fd,R1
+0003a4 82100000		MOV	0(R1),R2
+0003a8 a2e00000		MOV	R2,0(R14)	*push fd
+0003ac 40000003		MOV	$close,R0
+0003b0 c7000010		SYSCALL
+0003b4 8fe00004		MOV	4(R14),R15	*pop link
+0003b8 4ee80004		ADD	R14,$4,R14	*move stack frame
+0003bc c700000f		JMP	(R15)
+
+0003c0 480024a4	getc	MOV	$rptr,R8
+0003c4 490024a0		MOV	$eptr,R9
+0003c8 8a800000		MOV	0(R8),R10
+0003cc 8b900000		MOV	0(R9),R11
+0003d0 0ca9000b		SUB	R10,R11,R12
+0003d4 ed000006		JGE	readf
+0003d8 90a00000	rtnc	MOVB	0(R10),R0
+0003dc 4aa80001		ADD	R10,$1,R10
+0003e0 aa800000		MOV	R10,0(R8)
+0003e4 c700000f		JMP	(R15)
+
+0003e8 40000000	rtn0	MOV	$0,R0
+0003ec c700000f		JMP	(R15)
+
+0003f0 4ee90008	readf	SUB	R14,$8,R14
+0003f4 4100049c		MOV	$fd,R1
+0003f8 82100000		MOV	0(R1),R2
+0003fc a2e00000		MOV	R2,0(R14)	*push fd
+000400 410004a0		MOV	$buf,R1
+000404 a1e00004		MOV	R1,4(R14)	*push buf
+000408 41000100		MOV	$len,R1
+00040c a1e00008		MOV	R1,8(R14)	*push len
+000410 40000001		MOV	$read,R0
+000414 c7000010		SYSCALL
+000418 41000498		MOV	$n,R1		*technically can do this w/o label n
+00041c a0100000		MOV	R0,0(R1)	*save n
+000420 82100000		MOV	0(R1),R2
+000424 42290000		SUB	R2,$0,R2
+000428 e1ffffef		JEQ	rtn0		*if nothing read, return 0
+00042c 480024a4		MOV	$rptr,R8
+000430 490024a0		MOV	$eptr,R9
+000434 4a0004a0		MOV	$buf,R10
+000438 aa800000		MOV	R10,0(R8)	*rptr is at buf[0]
+00043c 0c00000a		MOV	R10,R12
+000440 8d800000		MOV	0(R8),R13
+000444 0b00000a		MOV	R10,R11
+000448 0b28000b		ADD	R2,R11,R11	*add n to eptr to shift address limit
+00044c ab900000		MOV	R11,0(R9)	*store updated eptr
+000450 4ee80008		ADD	R14,$8,R14	*move stack frame
+000454 e7ffffe0		JMP	rtnc		*made read, continue with getc
+
+000458 40000004	exit	MOV	$4,R0
+00045c c7000010		SYSCALL
+
+       ffffffff	stackb	EQU	FFFF
+000460 00000000	rtrn	WORD	0
+000464 7273752f	in	STRINGZ '/usr/cde/wirth/wordsort/words'
+000468 6564632f	
+00046c 7269772f	
+000470 772f6874	
+000474 7364726f	
+000478 2f74726f	
+00047c 64726f77	
+000480 00000073	
+000484 7273752f	in2	STRINGZ	'/usr/jcf/awk/lorem'
+000488 66636a2f	
+00048c 6b77612f	
+000490 726f6c2f	
+000494 00006d65	
+       00000000	mode	EQU	0	*read
+       00000000	open	EQU	0	*SYSCALL
+       00000003	close	EQU	3	*SYSCALL
+       00000001	read	EQU	1	*SYSCALL
+000498 00000000	n	WORD	0	*bytes read by readf
+00049c 00000000	fd	WORD	0
+               	buf	BSS	8192
+       00000100	len	EQU	256
+0024a0 00000000	eptr	WORD	0
+0024a4 00000000	rptr	WORD	0
+               	dest	BSS	8192	*a list of null terminated words
+0044a8 000024a8	dptr	WORD	dest	*keep track of index in dest (to next new word)
+0044ac 000024a8	wptr	WORD	dest	*a temp pointer to current word (push to tree)
+               	plist	BSS	1024	*a list of pointers (to null terminated words)
+0048b0 000044b0	lptr	WORD 	plist
+               	bst	BSS	8192		*populate me
+       000048b4	root	EQU	bst
+0068b4 000048b4	ptr	WORD	root
+       00000004	leftlf	EQU	4
+       00000008	rghtlf	EQU	8 
+0068b8 62656766	data	STRINGZ	'fgebach'
+0068bc 00686361	
+               	pbuf	BSS	8192
+       00002000	plen	EQU	8192
+0088c0 000068c0	pptr	WORD	pbuf
+       0000002c	comma	EQU	0X2c
+               	pbuff	BSS	32	
+
+                Symbol Table
+S 0x000000 main
+S 0x000014 badprnt
+S 0x000020 nulchk
+S 0x00002c pwrd2
+S 0x00005c printtr
+S 0x000074 print
+S 0x000084 pwrd
+S 0x0000b0 br
+S 0x0000b4 printlv
+S 0x0000c0 maketr
+S 0x0000c8 nextnd
+S 0x0000d8 valword
+S 0x0000f0 fin
+S 0x0000fc insnode
+S 0x000120 insert
+S 0x000148 nxtnd
+S 0x000154 strcmp
+S 0x000168 cmp
+S 0x000190 gt
+S 0x000198 lt
+S 0x0001a0 fndrgt
+S 0x0001a4 here
+S 0x0001d4 fndlft
+S 0x0001d8 there
+S 0x000208 fndopen
+S 0x00022c insleaf
+S 0x000244 debug
+S 0x00024c newnode
+S 0x000268 getword
+S 0x000278 popb
+S 0x00028c saveptr
+S 0x000298 getlist
+S 0x0002c8 getwd
+S 0x0002cc b
+S 0x0002f0 addnull
+S 0x0002f8 store
+S 0x000304 finish
+S 0x000314 isupr
+S 0x000324 islwr
+S 0x000340 openf
+S 0x000374 wrtstdo
+S 0x000398 closef
+S 0x0003c0 getc
+S 0x0003d8 rtnc
+S 0x0003e8 rtn0
+S 0x0003f0 readf
+S 0x000458 exit
+S 0xffffffff stackb
+S 0x000460 rtrn
+S 0x000464 in
+S 0x000484 in2
+S 0x000000 mode
+S 0x000000 open
+S 0x000003 close
+S 0x000001 read
+S 0x000498 n
+S 0x00049c fd
+S 0x0004a0 buf
+S 0x000100 len
+S 0x0024a0 eptr
+S 0x0024a4 rptr
+S 0x0024a8 dest
+S 0x0044a8 dptr
+S 0x0044ac wptr
+S 0x0044b0 plist
+S 0x0048b0 lptr
+S 0x0048b4 bst
+S 0x0048b4 root
+S 0x0068b4 ptr
+S 0x000004 leftlf
+S 0x000008 rghtlf
+S 0x0068b8 data
+S 0x0068c0 pbuf
+S 0x002000 plen
+S 0x0088c0 pptr
+S 0x00002c comma
+S 0x0088c4 pbuff

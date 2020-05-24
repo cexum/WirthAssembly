@@ -1,0 +1,50 @@
+#!/bin/wpemu -r -f
+000058 00000000	
+000058 00000000	dest	STRINGZ	''		*copy buf into dest
+                *
+                *addr.s	an exercise in keeping up with addresses
+                *
+
+000000 41000050	main	MOV	$buf,R1		*load buff addr
+000004 42000058		MOV	$rptr,R2	*load pointer addr
+000008 47180008		ADD	R1,$n,R7	*calculate end of buf
+00000c a7600000		MOV	R7,0(R6)	*store end of buf in eptr
+000010 a1200000		MOV	R1,0(R2)	*store buf[0] in rptr
+000014 4b000058		MOV	$dest,R11	*load address of dest
+000018 4c000060		MOV	$dptr,R12	*load dptr
+00001c abc00000		MOV	R11,0(R12)	*store dest[0] in dptr
+
+000020 83200000	getc	MOV	0(R2),R3	*load buf[c] via ptr
+000024 94300000		MOVB	0(R3),R4	*pop first byte...
+000028 b4c00000		MOVB	R4,0(R12)	*push byte into dest
+00002c 4cc80001		ADD	R12,$1,R12	*messy way to keep up with dest "ptr"
+000030 43380001		ADD	R3,$1,R3	*increment addr
+000034 a3200000		MOV	R3,0(R2)	*store buf[c + 1] in rptr
+000038 88200000		MOV	0(R2),R8	*load address of rptr for comparison
+00003c 89600000		MOV	0(R6),R9	*load address of eptr for comparison
+000040 0a990008		SUB	R9,R8,R10
+000044 e9fffff6		JNE	getc
+
+000048 40000004	exit	MOV	$4,R0
+00004c c7000010		SYSCALL
+
+
+000050 64636261	buf	STRINGZ	'abcdefgh'	*pretend it propogates from file open
+000054 68676665	
+000058 00000000	
+000058 00000000	dest	STRINGZ	''		*copy buf into dest
+       00000008	n	EQU	8		*here, i know len is 9...
+000058 00000000	rptr	WORD	0		*read pointer
+00005c 00000000	eptr	WORD	0		*figure out how to point at end of buf
+000060 00000000	dptr	WORD	0		*dest pointer
+
+                Symbol Table
+S 0x000000 main
+S 0x000020 getc
+S 0x000048 exit
+S 0x000050 buf
+S 0x000058 dest
+S 0x000008 n
+S 0x000058 rptr
+S 0x00005c eptr
+S 0x000060 dptr
